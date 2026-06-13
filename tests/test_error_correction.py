@@ -76,11 +76,10 @@ def test_errorcorrection_transpiler_gate_correctness(code: str, gate: Gate) -> N
     num_qubits = gate.num_qubits
     logical_circuit = QuantumCircuit(num_qubits)
     logical_circuit.append(gate, qargs=list(range(num_qubits)))
-    error_corrected_circuit = logical_circuit.copy()
     if code == "shor":
-        transpiler = ShorTranspiler(error_corrected_circuit, add_syndromes=True)
+        transpiler = ShorTranspiler(logical_circuit.copy(), add_syndromes=True)
     else:
-        transpiler = SteaneTranspiler(logical_circuit, add_syndromes=True)
+        transpiler = SteaneTranspiler(logical_circuit.copy(), add_syndromes=True)
     transpiler.transpile()
     transpiler.decode_qubits()
     error_corrected_circuit = transpiler.transpiled_qc
@@ -162,7 +161,6 @@ def test_errorcorrection_transpiler_correctness(code: str, algorithm: str, Error
     transpiler.decode_qubits()
     error_corrected_circuit = transpiler.transpiled_qc
 
-    error_induced_circuit = error_corrected_circuit.copy()
     error_induced_circuit = insert_error_after_barrier(
         error_corrected_circuit,
         barrier_label="Encoding",
