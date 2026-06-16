@@ -129,6 +129,7 @@ class SteaneTranspiler:
                     basis_gates=["h", "x", "z", "s", "t", "cx", "cz"],
                     optimization_level=3,
                     approximation_degree=0.95,
+                    unitary_synthesis_method="sk",  # test
                 )
 
                 normalized.compose(
