@@ -24,7 +24,7 @@ from qiskit.circuit.library import CXGate, CZGate, HGate, SGate, XGate, ZGate
 from qiskit.quantum_info import hellinger_fidelity
 from qiskit_aer.primitives import SamplerV2
 
-import mqt.bench.benchmark_generation as benchmark_generation
+from mqt.bench import benchmark_generation
 from mqt.bench.error_correction.shor_transpiler import ShorTranspiler
 from mqt.bench.error_correction.steane_transpiler import SteaneTranspiler
 
@@ -44,7 +44,8 @@ def test_errorcorrection_transpiler_gate_equivalence(code: str, gate: Gate) -> N
     MQT QCEC that the resulting circuit is unitarily equivalent to the original.
     """
     if gate.name == "s" and code == "shor":
-        # this SGate includes non-unitary elements and can therefore not be evaluated properly
+        # this transpiler constructs the SGate using measure and a classically controlled operation
+        # therefore it can't be evaluated properly by MQT.QCEC
         return
 
     num_qubits = gate.num_qubits
@@ -89,14 +90,13 @@ def test_errorcorrection_transpiler_gate_correctness(code: str, gate: Gate) -> N
     if code == "shor":
         transpiler = ShorTranspiler(error_corrected_circuit, add_syndromes=True)
     else:
-        transpiler = SteaneTranspiler(logical_circuit, add_syndromes=True)
+        transpiler = SteaneTranspiler(error_corrected_circuit, add_syndromes=True)
     transpiler.transpile()
     transpiler.decode_qubits()
     error_corrected_circuit = transpiler.transpiled_qc
 
     error_induced_circuit = error_corrected_circuit.copy()
     # this is for inserting phase flip in steane after the first Hadamard
-    # error_induced_circuit = insert_error(error_induced_circuit ,gate=ZGate(), index=16)
     error_induced_circuit = insert_error(error_induced_circuit, gate=XGate())
 
     logical_counts, logical_circuit = run_circuit(logical_circuit)
@@ -151,10 +151,10 @@ def add_h_before_measurements(qc: QuantumCircuit) -> QuantumCircuit:
 
 
 @pytest.mark.parametrize("code", ["shor", "steane"])
-@pytest.mark.parametrize("algorithm", ["ghz", "bv", "graphstate"])  # "qft" is unfeasible
+@pytest.mark.parametrize("algorithm", ["ghz", "bv", "graphstate"])  # "qft" is unfeasible: >3k gates on 34 qubits
 @pytest.mark.parametrize("error", [XGate(), ZGate()])
 @pytest.mark.parametrize("measure_base_x", [True, False])
-@pytest.mark.parametrize("circuit_size", [3])  # range(3, 11))
+@pytest.mark.parametrize("circuit_size", [3])
 def test_errorcorrection_transpiler_correctness(
     code: str, algorithm: str, error: Gate, measure_base_x: bool, circuit_size: int
 ) -> None:
@@ -162,6 +162,9 @@ def test_errorcorrection_transpiler_correctness(
 
     Afterwards an error is introduced and the test checks, whether it is corrected.
     Iterates over a number of example algorithms.
+
+    `circuit_size` can be any list of integers between 3 and 10 (=> up to range(3,11)).
+    For larger circuit sizes, gate_counts.json has to be updated
     """
     test_id = f"{circuit_size} qubit {algorithm} on {code} with ZBasis {measure_base_x} and error {error.name}"
 
@@ -303,9 +306,8 @@ def test_error_correction_circuit_structure(code: str, alg: str, logical_qubits:
     expected_gate_counts = None
 
     json_location = Path(__file__).parent / "gate_counts.json"
-    with Path(f"{json_location}").open("r", encoding="utf-8") as json_data:
+    with json_location.open("r", encoding="utf-8") as json_data:
         expected_gate_counts = json.load(json_data)
-        json_data.close()
 
     assert expected_gate_counts is not None, f"Failure reading respective gate counts for {test_id}"
     expected_gate_counts = expected_gate_counts[code][alg][f"{logical_qubits}"]
@@ -376,14 +378,18 @@ def insert_error(qc: QuantumCircuit, gate: Gate | None = None, index: int | None
             (default), the position right after the first barrier is used.
 
     Returns:
-        *qc* with the error gate inserted.
+        The same *qc* instance with the error gate inserted.
 
     Raises:
         ValueError: If *index* is ``None`` and no barrier is found in the circuit.
     """
     gate = XGate() if gate is None else gate
-    assert qc.num_qubits >= gate.num_qubits, f"Quantum Circuit has not enough qubits to accommodate gate {gate.name}"
-    assert index is None or index >= 0, f"Index must be >= 0, Index provided: {index}"
+    if qc.num_qubits < gate.num_qubits:
+        msg = f"Quantum Circuit has not enough qubits to accommodate gate {gate.name}"
+        raise ValueError(msg)
+    if index is not None and index < 0:
+        msg = f"Index must be >= 0, Index provided: {index}"
+        raise ValueError(msg)
 
     # Finds the first barrier
     if index is None:
@@ -404,7 +410,16 @@ def insert_error(qc: QuantumCircuit, gate: Gate | None = None, index: int | None
 
 
 def check_equivalence(qc1: qk.QuantumCircuit, qc2: qk.QuantumCircuit) -> bool:
-    """Uses MQT QCEC to verify if qc1 and qc2 are equivalent."""
+    """Uses MQT QCEC to verify if qc1 and qc2 are equivalent.
+
+    Args:
+        qc1: The first quantum circuit.
+        qc2: The second quantum circuit.
+
+    Returns:
+        True if the circuits are equivalent, equivalent up to global phase,
+        or probably equivalent; False otherwise.
+    """
     verification_results = mqt.qcec.verify(qc1, qc2, check_partial_equivalence=True)
     accepted_equivalencies = [
         EquivalenceCriterion.equivalent,
@@ -437,15 +452,20 @@ def measure_all_named(qc: QuantumCircuit, name: str = "measurement") -> QuantumC
 
 
 def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCircuit]:
-    """Simulates the circuit using AerSimulator.
+    """Simulate the circuit using Aer's SamplerV2 and return measurement counts.
 
-    Adds measurements to all qubits, adds new classical registers for each.
-    Reads out ONLY those measurements and returns their counts
+    Adds a named classical register for measurements, simulates the circuit,
+    and extracts the measurement outcomes.
+
+    Args:
+        qc: The quantum circuit to simulate. It will be modified in place to
+            add measurements.
+        shots: Number of simulation shots. Defaults to 1024.
 
     Returns:
-        counts of all quantum registers
-
-        qc with measure_all()
+        Tuple containing:
+        - Measurement counts with bitstrings reversed to align qubit indices.
+        - The input circuit with measurements added.
     """
     sampler = SamplerV2()
     qc = measure_all_named(qc, "measurements")
@@ -456,7 +476,7 @@ def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCir
     pub_result = result[0]
     meas_bit_counts = pub_result.data.measurements.get_counts()  # ty: ignore[unresolved-attribute]
 
-    # outputs reversed bitstrings, we just reverse them right back,
+    # get_counts() outputs reversed bitstrings, we just reverse them right back,
     # so their indices align with the qubit indices
     meas_bit_counts = {k[::-1]: v for k, v in meas_bit_counts.items()}
 
@@ -466,10 +486,23 @@ def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCir
 def compare_distributions(
     qc1: QuantumCircuit, qc2: QuantumCircuit, counts1: dict, counts2: dict, code1: str = "None", code2: str = "None"
 ) -> float:
-    """Simulates 2 circuits and computes the Hellinger Fidelity between their count distributions.
+    """Compute the Hellinger fidelity between two measurement distributions.
 
-    Hellinger Fidelity: 1 = the same, 0 = no overlap.
-    If code is set to either 'steane' or 'shor' circuit error's result will be interpreted logically
+    If either code is 'steane' or 'shor', the corresponding counts are condensed
+    from physical qubits to logical qubits before comparison.
+
+    Args:
+        qc1: The first quantum circuit.
+        qc2: The second quantum circuit.
+        counts1: Measurement counts from the first circuit.
+        counts2: Measurement counts from the second circuit.
+        code1: Error correction code for the first circuit ('steane', 'shor',
+            or 'None'). Defaults to 'None'.
+        code2: Error correction code for the second circuit ('steane', 'shor',
+            or 'None'). Defaults to 'None'.
+
+    Returns:
+        Hellinger fidelity between the distributions (1 = identical, 0 = no overlap).
     """
     if code1 in ["steane", "shor"]:
         counts1 = condense_counts(qc1, counts1)
@@ -480,9 +513,17 @@ def compare_distributions(
 
 
 def parse_qubits(qc: qk.QuantumCircuit, physical_qubits: str) -> str:
-    """Takes in a measurement in physical qubits and returns the corresponding logical measurement.
+    """Extract logical qubit measurements from a physical measurement string.
 
-    Underlying circuit must use registers named 'qx' (x in int) for each logical qubit, with results in qx[0]
+    The circuit must use registers named 'qx' (where x is an integer) for each
+    logical qubit, with the decoded result stored in qx[0].
+
+    Args:
+        qc: The quantum circuit containing named registers.
+        physical_qubits: Measurement bitstring from physical qubits.
+
+    Returns:
+        Logical measurement bitstring extracted from the named registers.
     """
     # remove blanks caused by classical registers
     physical_qubits = physical_qubits.replace(" ", "")
@@ -503,9 +544,18 @@ def parse_qubits(qc: qk.QuantumCircuit, physical_qubits: str) -> str:
 
 
 def condense_counts(qc: qk.QuantumCircuit, counts: dict[str, int]) -> dict[str, int]:
-    """Takes in a result dict of a decoded physical measurement and returns logical measurements.
+    """Map physical measurement counts to logical measurement counts.
 
-    Requires decode to place the result in the first qubit of each register named 'qx', with x an integer (e.g. 'q2').
+    Requires the circuit to have decoded each logical qubit into the first
+    qubit of a register named 'qx', where x is an integer (e.g., 'q2').
+
+    Args:
+        qc: The quantum circuit with named registers.
+        counts: Dictionary mapping physical measurement bitstrings to counts.
+
+    Returns:
+        Dictionary mapping logical measurement bitstrings to counts, where
+        multiple physical measurements may map to the same logical measurement.
     """
     logical_counts = {}
     for physical_measurement, count in counts.items():
