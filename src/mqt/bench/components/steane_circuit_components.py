@@ -6,7 +6,7 @@
 #
 # Licensed under the MIT License
 
-"""Shor's 9-qubit code circuit components."""
+"""Steane's 9-qubit code circuit components."""
 
 from __future__ import annotations
 
