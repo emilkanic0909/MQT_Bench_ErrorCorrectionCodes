@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import qiskit as qk
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import AncillaRegister
 
@@ -123,6 +124,9 @@ class SteaneTranspiler:
             if gate_name == "qft":
                 tmp = QuantumCircuit(len(instruction.qubits))
                 tmp.append(instruction.operation, range(len(instruction.qubits)))
+                print("###################################################################")
+                print("qiskit version for debugging:", qk.__version__)
+                print("###################################################################")
 
                 tmp = transpile(
                     tmp,
