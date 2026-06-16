@@ -83,6 +83,10 @@ dev = [
     "prek>=0.2.27",
     "ty==0.0.40",
 ]
+pytest = [
+    "mqt-qcec>=3.6.1",
+    "qiskit-aer>=0.17.2",
+]
 
 [project.scripts]
 "create_mqt_bench_zip" = "mqt.bench.utils:create_zip_file"
