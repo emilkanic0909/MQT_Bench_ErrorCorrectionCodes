@@ -43,7 +43,7 @@ def test_errorcorrection_transpiler_gate_equivalence(code: str, gate: Gate) -> N
     decodes the physical qubits back to logical qubits, and then checks via
     MQT QCEC that the resulting circuit is unitarily equivalent to the original.
     """
-    if (gate.name == "s" and code == "shor") or (gate.name == "h" and code == "shor") :
+    if (gate.name == "s" and code == "shor") or (gate.name == "h" and code == "shor"):
         # this transpiler constructs the SGate using measure and a classically controlled operation
         # therefore it can't be evaluated properly by MQT.QCEC
         return
