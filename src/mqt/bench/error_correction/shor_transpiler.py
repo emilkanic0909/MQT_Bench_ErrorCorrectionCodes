@@ -170,6 +170,7 @@ class ShorTranspiler:
                     basis_gates=continuous_basis,
                     optimization_level=3,
                     approximation_degree=0.95,
+                    seed_transpiler=10,
                 )
 
                 # 2. Use Solovay-Kitaev to approximate the continuous single-qubit gates using discrete gates
@@ -186,6 +187,7 @@ class ShorTranspiler:
                     basis_gates=["h", "x", "z", "s", "t", "cx", "cz"],
                     optimization_level=3,
                     approximation_degree=0.95,
+                    seed_transpiler=10,
                 )
 
                 normalized.compose(
