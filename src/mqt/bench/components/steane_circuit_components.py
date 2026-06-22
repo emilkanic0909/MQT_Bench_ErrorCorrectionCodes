@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
+from qiskit.circuit import AncillaRegister, ClassicalRegister, QuantumCircuit, QuantumRegister
 
-from qiskit.circuit import AncillaRegister, QuantumCircuit, QuantumRegister, ClassicalRegister
 
 def get_seven_qubit_steane_code_encoding_circuit() -> QuantumCircuit:
     """Create the 7-qubit Steane code encoding circuit.
