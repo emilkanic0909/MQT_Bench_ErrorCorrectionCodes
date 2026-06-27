@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class SteaneTranspiler:
     """A high-level transpiler that encodes a QuantumCircuit using Steane's 7-qubit error correction code."""
 
-    def __init__(self, original_circuit: QuantumCircuit, add_syndromes: bool = True) -> None:
+    def __init__(self, original_circuit: QuantumCircuit, *, add_syndromes: bool = True) -> None:
         """Initialize the transpiler with the original QuantumCircuit."""
         self.original_qc = original_circuit
         self.num_logical_qubits = original_circuit.num_qubits
@@ -38,7 +38,6 @@ class SteaneTranspiler:
         self.phase_flip_syndromes: list[AncillaRegister] = []
         self.bit_flip_syndrome_measurements: list[ClassicalRegister] = []
         self.phase_flip_syndrome_measurements: list[ClassicalRegister] = []
-        # self.logical_qubit_measurements: list[ClassicalRegister] = []
         self.add_syndromes = add_syndromes
         self.t_gate_count = 0
         self.transpiled_qc = QuantumCircuit()
@@ -55,7 +54,16 @@ class SteaneTranspiler:
         }
 
     def transpile(self) -> QuantumCircuit:
-        """Transpile the original circuit to a fault-tolerant circuit using Steane's code."""
+        """Transpile the original circuit to a fault-tolerant circuit using Steane's code.
+
+        High-level Qiskit instructions such as ``QFTGate`` are first decomposed
+        into the supported basis gates. For QFT, this decomposition currently
+        uses ``approximation_degree=0.95``, so encoded QFT circuits are
+        approximate rather than exact.
+
+        Returns:
+             The transpiled fault-tolerant circuit.
+        """
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
@@ -70,14 +78,12 @@ class SteaneTranspiler:
             phase_flip_syndrome_register = AncillaRegister(3, f"ps{logical_qubit_index}")
             bit_flip_measurement_register = ClassicalRegister(3, f"bsm{logical_qubit_index}")
             phase_flip_measurement_register = ClassicalRegister(3, f"psm{logical_qubit_index}")
-            # logical_qubit_measurement_register = ClassicalRegister(1, f"logical_meas{logical_qubit_index}")
 
             self.physical_data_registers.append(physical_data_register)
             self.bit_flip_syndromes.append(bit_flip_syndrome_register)
             self.phase_flip_syndromes.append(phase_flip_syndrome_register)
             self.bit_flip_syndrome_measurements.append(bit_flip_measurement_register)
             self.phase_flip_syndrome_measurements.append(phase_flip_measurement_register)
-            # self.logical_qubit_measurements.append(logical_qubit_measurement_register)
 
             all_registers.extend([
                 physical_data_register,
@@ -85,7 +91,6 @@ class SteaneTranspiler:
                 phase_flip_syndrome_register,
                 bit_flip_measurement_register,
                 phase_flip_measurement_register,
-                # logical_qubit_measurement_register
             ])
 
         self.transpiled_qc = QuantumCircuit(*all_registers)
@@ -114,7 +119,14 @@ class SteaneTranspiler:
         self.transpiled_qc.barrier()
 
     def replace_gates(self) -> None:
-        """Scan original circuit and replace gates with logical equivalents."""
+        """Scan the original circuit and replace gates with logical equivalents.
+
+        High-level gates are normalized before logical encoding. In particular,
+        ``QFTGate`` instructions are transpiled to the supported
+        ``["h", "x", "z", "s", "t", "cx", "cz"]`` basis with
+        ``approximation_degree=0.95``. This means QFT instructions are encoded
+        as approximate circuits rather than exact QFT implementations.
+        """
         # Firstly, expand high level gates, such as QFTGate()
         normalized = QuantumCircuit(*self.original_qc.qregs, *self.original_qc.cregs)
         for instruction in self.original_qc.data:
@@ -157,10 +169,11 @@ class SteaneTranspiler:
     def _handle_barrier(self, instruction: CircuitInstruction) -> None:
         """Handle barrier instruction."""
         barrier_register = []
-        for i in range(len(instruction.qubits)):
-            physical_data_register = self.physical_data_registers[i]
-            bit_flip_syndromes_register = self.bit_flip_syndromes[i]
-            phase_flip_syndromes_register = self.phase_flip_syndromes[i]
+        for q in instruction.qubits:
+            logical_qubit_index = self.original_qc.qubits.index(q)
+            physical_data_register = self.physical_data_registers[logical_qubit_index]
+            bit_flip_syndromes_register = self.bit_flip_syndromes[logical_qubit_index]
+            phase_flip_syndromes_register = self.phase_flip_syndromes[logical_qubit_index]
             barrier_register.extend([
                 physical_data_register,
                 bit_flip_syndromes_register,
@@ -169,9 +182,10 @@ class SteaneTranspiler:
         self.transpiled_qc.barrier(*barrier_register, label="Barrier")
 
     def _handle_measure(self, instruction: CircuitInstruction) -> None:
-        """Handle measure instruction."""
-        # TODO: consider measure_all(), because of new meas register everything goes wrong
+        """Handle measure instruction.
 
+        measure_all() is unsupported operation
+        """
         for q, c in zip(instruction.qubits, instruction.clbits, strict=False):
             logical_qubit_index = self.original_qc.qubits.index(q)
             logical_classical_bit_index = self.original_qc.clbits.index(c)
@@ -188,9 +202,6 @@ class SteaneTranspiler:
 
             physical_data_register = self.physical_data_registers[logical_qubit_index][0]
             self.transpiled_qc.measure(physical_data_register, physical_measurement_register)
-
-            # self.transpiled_qc.measure(self.physical_data_registers[logical_qubit_index][0],
-            #                           self.logical_qubit_measurements[logical_classical_bit_index])
 
             self.transpiled_qc.barrier(label=f"Measurement {logical_qubit_index}")
 
@@ -229,7 +240,7 @@ class SteaneTranspiler:
 
     def _handle_s(self, instruction: CircuitInstruction) -> None:
         """Handle S instruction."""
-        # S Made cia SDG
+        # S Made via SDG
         logical_qubit_index = self.original_qc.qubits.index(instruction.qubits[0])
         physical_data_register = self.physical_data_registers[logical_qubit_index]
 

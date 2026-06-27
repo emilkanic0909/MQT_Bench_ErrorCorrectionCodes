@@ -17,8 +17,7 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import AncillaRegister
 
-# ignore the below comment
-#  these functions are reused from the benchmark and they should be extendable i.e. they shouldn't be private
+# these functions are reused from the benchmark and they should be extendable therefore they were moved into a dedicated block
 from mqt.bench.components.shor_circuit_components import (
     apply_nine_qubit_shors_code_bit_flip_correction,
     apply_nine_qubit_shors_code_phase_flip_correction,
@@ -52,20 +51,29 @@ class ShorLogicalQubit:
         """Return all active registers for this logical qubit."""
         regs = [self.data]
         if self.bit_flip_syndrome:
-            regs.extend([
-                self.bit_flip_syndrome,
-                self.phase_flip_syndrome,
-                self.bit_flip_measure,
-                self.phase_flip_measure,
-            ])
+            regs.extend(
+                reg
+                for reg in [
+                    self.bit_flip_syndrome,
+                    self.phase_flip_syndrome,
+                    self.bit_flip_measure,
+                    self.phase_flip_measure,
+                ]
+                if reg is not None
+            )
         return regs
 
 
 class ShorTranspiler:
     """A high-level transpiler that encodes a QuantumCircuit using Shor's 9-qubit error correction code."""
 
-    def __init__(self, original_circuit: QuantumCircuit, add_syndromes: bool = True) -> None:
-        """Initialize the transpiler with the original QuantumCircuit."""
+    def __init__(self, original_circuit: QuantumCircuit, *, add_syndromes: bool = True) -> None:
+        """Initialize the transpiler with the original QuantumCircuit.
+
+        Args:
+            original_circuit: Original circuit to transpile using Shor's code.
+            add_syndromes: Whether to insert syndrome extraction and correction cycles.
+        """
         self.original_qc = original_circuit
         self.num_logical_qubits = original_circuit.num_qubits
         self.add_syndromes = add_syndromes
@@ -78,7 +86,16 @@ class ShorTranspiler:
         self.physical_data_registers: list[QuantumRegister] = []
 
     def transpile(self) -> QuantumCircuit:
-        """Transpile the original circuit to a fault-tolerant circuit using Shor's code."""
+        """Transpile the original circuit to a fault-tolerant circuit using Shor's code.
+
+        High-level Qiskit instructions such as ``QFTGate`` are first decomposed
+        into the supported basis gates. For QFT, this decomposition currently
+        uses ``approximation_degree=0.95``, so encoded QFT circuits are
+        approximate rather than exact.
+
+        Returns:
+             The transpiled fault-tolerant circuit.
+        """
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
@@ -153,7 +170,14 @@ class ShorTranspiler:
         )
 
     def replace_gates(self) -> None:
-        """Scan original circuit and replace gates with logical equivalents."""
+        """Scan the original circuit and replace gates with logical equivalents.
+
+        High-level gates are normalized before logical encoding. In particular,
+        ``QFTGate`` instructions are transpiled to the supported
+        ``["h", "x", "z", "s", "t", "cx", "cz"]`` basis with
+        ``approximation_degree=0.95``. This means QFT instructions are encoded
+        as approximate circuits rather than exact QFT implementations.
+        """
         # Firstly, expand high level gates, such as QFTGate()
         normalized = QuantumCircuit(*self.original_qc.qregs, *self.original_qc.cregs)
         for instruction in self.original_qc.data:
@@ -342,10 +366,14 @@ class ShorTranspiler:
         qc.p(phase, physical_ancilla_register[0])
         ShorTranspiler._apply_shor_encoding(qc, physical_ancilla_register)
 
-    def _apply_logical_cx(self, control_register: QuantumRegister, target_register: QuantumRegister) -> None:
-        """Apply transversal logical CX between two physical registers."""
+    def _apply_logical_cx(self, logical_control: QuantumRegister, logical_target: QuantumRegister) -> None:
+        """Apply transversal logical CX between two physical registers.
+
+        Note: Due to Shor code structure, physical CX control/target are inverted.
+        """
         for physical_qubit_index in range(SHOR_TOTAL_QUBITS):
-            self.transpiled_qc.cx(target_register[physical_qubit_index], control_register[physical_qubit_index])
+            # Physical control/target are swapped relative to logical
+            self.transpiled_qc.cx(logical_target[physical_qubit_index], logical_control[physical_qubit_index])
 
     def _logical_cx(self, control_logical_qubit_index: int, target_logical_qubit_index: int) -> None:
         """Apply transversal logical CX.
