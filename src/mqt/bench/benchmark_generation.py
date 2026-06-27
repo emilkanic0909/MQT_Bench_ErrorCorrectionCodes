@@ -228,16 +228,16 @@ def get_benchmark_alg(
     qc = _get_circuit(benchmark, circuit_size, random_parameters, **kwargs)
     # Todo: Make it combined with error code
     if generate_mirror_circuit:
-        return _create_mirror_circuit(qc, inplace=True)
+        qc = _create_mirror_circuit(qc, inplace=True)
 
     if encoding == "shor":
         transpiler = ShorTranspiler(qc, add_syndromes=True)
         transpiler.transpile()
-        return transpiler.transpiled_qc
+        qc = transpiler.transpiled_qc
     if encoding == "steane":
         transpiler = SteaneTranspiler(qc, add_syndromes=True)
         transpiler.transpile()
-        return transpiler.transpiled_qc
+        qc = transpiler.transpiled_qc
 
     return qc
 
