@@ -331,7 +331,6 @@ class SteaneTranspiler:
             self.insert_syndromes(control_logical_qubit_index)
             self.insert_syndromes(target_logical_qubit_index)
 
-    # TODO: Review and verify it works
     def insert_syndromes(self, logical_qubit_index: int) -> None:
         """Automate the insertion of the measurement and correction cycles."""
         physical_data_register = self.physical_data_registers[logical_qubit_index]
