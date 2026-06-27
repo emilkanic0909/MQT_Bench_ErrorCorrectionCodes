@@ -22,7 +22,6 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import CircuitInstruction, ClassicalRegister
 from qiskit.circuit.library import CXGate, CZGate, HGate, SGate, XGate, ZGate
 from qiskit.quantum_info import hellinger_fidelity
-from qiskit_aer.primitives import SamplerV2
 
 from mqt.bench import benchmark_generation
 from mqt.bench.error_correction.shor_transpiler import ShorTranspiler
@@ -467,7 +466,9 @@ def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCir
         - Measurement counts with bitstrings reversed to align qubit indices.
         - The input circuit with measurements added.
     """
-    sampler = SamplerV2()
+    # Skiping tests if qiskit-aer isnot installed, because of the problem with wheel for Ubuntu with ARM, there was a built version for Python 3.14. 
+    aer_primitives = pytest.importorskip("qiskit_aer.primitives")
+    sampler = aer_primitives.SamplerV2()
     qc = measure_all_named(qc, "measurements")
     job = sampler.run([qc], shots=shots)
     result = job.result()
