@@ -466,7 +466,8 @@ def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCir
         - Measurement counts with bitstrings reversed to align qubit indices.
         - The input circuit with measurements added.
     """
-    # Skipping tests if qiskit-aer isnot installed, because of the problem with wheel for Ubuntu with ARM, there was a built version for Python 3.14.
+    # Skipping tests if qiskit-aer is not installed, because of the problem with the missingwheel for Ubuntu with ARM, there is no build version for Python 3.14.
+    # for more einformation, see: https://github.com/Qiskit/qiskit-aer/issues/2407#issuecomment-3849941299
     aer_primitives = pytest.importorskip("qiskit_aer.primitives")
     sampler = aer_primitives.SamplerV2()
     qc = measure_all_named(qc, "measurements")
