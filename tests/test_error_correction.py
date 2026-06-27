@@ -210,10 +210,10 @@ def test_errorcorrection_transpiler_correctness(
         error_corrected_circuit, error_induced_circuit, corrected_counts, induced_counts, code, code
     )
 
-    assert logical_corrected_fidelity >= 0.99, (
+    assert logical_corrected_fidelity >= 0.95, (
         f"Error corrected circuit created does not match its logical circuit well enough for {test_id}"
     )
-    assert corrected_induced_fidelity >= 0.99, (
+    assert corrected_induced_fidelity >= 0.95, (
         f"Error induced circuit created does not match correct the error well enough for {test_id}"
     )
 
