@@ -45,7 +45,7 @@ def test_errorcorrection_transpiler_gate_equivalence(code: str, gate: Gate) -> N
     if (gate.name == "s" and code == "shor") or (gate.name == "h" and code == "shor"):
         # this transpiler constructs the SGate using measure and a classically controlled operation
         # therefore it can't be evaluated properly by MQT.QCEC
-        return
+        pytest.skip()
 
     num_qubits = gate.num_qubits
     logical_circuit = QuantumCircuit(num_qubits)
@@ -80,7 +80,7 @@ def test_errorcorrection_transpiler_gate_correctness(code: str, gate: Gate) -> N
     """
     if gate.name == "s" and code == "shor":
         # this takes a little longer....
-        return
+        pytest.skip()
 
     num_qubits = gate.num_qubits
     logical_circuit = QuantumCircuit(num_qubits)
