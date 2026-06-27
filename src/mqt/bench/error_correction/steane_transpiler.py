@@ -64,6 +64,13 @@ class SteaneTranspiler:
          Returns:
              The transpiled fault-tolerant circuit.
          """
+
+        self.physical_data_registers.clear()
+        self.bit_flip_syndromes.clear()
+        self.phase_flip_syndromes.clear()
+        self.bit_flip_syndrome_measurements.clear()
+        self.phase_flip_syndrome_measurements.clear()
+        self.t_gate_count = 0
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
