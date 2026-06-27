@@ -63,7 +63,7 @@ class SteaneTranspiler:
 
         Returns:
              The transpiled fault-tolerant circuit.
-         """
+        """
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
