@@ -475,7 +475,7 @@ def run_circuit(qc: QuantumCircuit, shots: int = 1024) -> tuple[dict, QuantumCir
 
     # Grabbing only the desired outcomes
     pub_result = result[0]
-    meas_bit_counts = pub_result.data.measurements.get_counts()  # ty: ignore[unresolved-attribute]
+    meas_bit_counts = pub_result.data.measurements.get_counts()
 
     # get_counts() outputs reversed bitstrings, we just reverse them right back,
     # so their indices align with the qubit indices
