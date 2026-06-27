@@ -128,7 +128,7 @@ def apply_nine_qubit_shors_code_bit_flip_correction(
     Measures the 6 syndrome qubits and conditionally applies X gates to correct
     bit-flip errors on any of the 9 data qubits.
 
-    Arguments:
+    Args:
         qc: The quantum circuit to modify.
         logical_qubit: Register containing the 9 data qubits.
         bit_flip_syndrome: Ancilla register containing the 6 syndrome qubits.
