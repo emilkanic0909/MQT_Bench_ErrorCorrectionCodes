@@ -61,9 +61,9 @@ class SteaneTranspiler:
         uses ``approximation_degree=0.95``, so encoded QFT circuits are
         approximate rather than exact.
 
-         Returns:
+        Returns:
              The transpiled fault-tolerant circuit.
-         """
+        """
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
@@ -90,7 +90,7 @@ class SteaneTranspiler:
                 bit_flip_syndrome_register,
                 phase_flip_syndrome_register,
                 bit_flip_measurement_register,
-                phase_flip_measurement_register
+                phase_flip_measurement_register,
             ])
 
         self.transpiled_qc = QuantumCircuit(*all_registers)
@@ -127,7 +127,6 @@ class SteaneTranspiler:
         ``approximation_degree=0.95``. This means QFT instructions are encoded
         as approximate circuits rather than exact QFT implementations.
         """
-
         # Firstly, expand high level gates, such as QFTGate()
         normalized = QuantumCircuit(*self.original_qc.qregs, *self.original_qc.cregs)
         for instruction in self.original_qc.data:
@@ -187,7 +186,6 @@ class SteaneTranspiler:
 
         measure_all() is unsupported operation
         """
-
         for q, c in zip(instruction.qubits, instruction.clbits, strict=False):
             logical_qubit_index = self.original_qc.qubits.index(q)
             logical_classical_bit_index = self.original_qc.clbits.index(c)

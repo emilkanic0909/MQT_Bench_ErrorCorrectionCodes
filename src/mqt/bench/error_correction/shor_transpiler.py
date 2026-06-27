@@ -51,14 +51,16 @@ class ShorLogicalQubit:
         """Return all active registers for this logical qubit."""
         regs = [self.data]
         if self.bit_flip_syndrome:
-            for reg in [
-                self.bit_flip_syndrome,
-                self.phase_flip_syndrome,
-                self.bit_flip_measure,
-                self.phase_flip_measure,
-                ]:
-                if reg is not None:
-                    regs.append(reg)
+            regs.extend(
+                reg
+                for reg in [
+                    self.bit_flip_syndrome,
+                    self.phase_flip_syndrome,
+                    self.bit_flip_measure,
+                    self.phase_flip_measure,
+                ]
+                if reg is not None
+            )
         return regs
 
 
@@ -91,9 +93,9 @@ class ShorTranspiler:
         uses ``approximation_degree=0.95``, so encoded QFT circuits are
         approximate rather than exact.
 
-         Returns:
+        Returns:
              The transpiled fault-tolerant circuit.
-         """
+        """
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
@@ -176,7 +178,6 @@ class ShorTranspiler:
         ``approximation_degree=0.95``. This means QFT instructions are encoded
         as approximate circuits rather than exact QFT implementations.
         """
-
         # Firstly, expand high level gates, such as QFTGate()
         normalized = QuantumCircuit(*self.original_qc.qregs, *self.original_qc.cregs)
         for instruction in self.original_qc.data:
