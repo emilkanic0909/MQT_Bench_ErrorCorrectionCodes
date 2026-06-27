@@ -61,16 +61,9 @@ class SteaneTranspiler:
         uses ``approximation_degree=0.95``, so encoded QFT circuits are
         approximate rather than exact.
 
-         Returns:
+        Returns:
              The transpiled fault-tolerant circuit.
          """
-
-        self.physical_data_registers.clear()
-        self.bit_flip_syndromes.clear()
-        self.phase_flip_syndromes.clear()
-        self.bit_flip_syndrome_measurements.clear()
-        self.phase_flip_syndrome_measurements.clear()
-        self.t_gate_count = 0
         self.encode_qubits()
         self.replace_gates()
         return self.transpiled_qc
@@ -97,7 +90,7 @@ class SteaneTranspiler:
                 bit_flip_syndrome_register,
                 phase_flip_syndrome_register,
                 bit_flip_measurement_register,
-                phase_flip_measurement_register
+                phase_flip_measurement_register,
             ])
 
         self.transpiled_qc = QuantumCircuit(*all_registers)
@@ -134,7 +127,6 @@ class SteaneTranspiler:
         ``approximation_degree=0.95``. This means QFT instructions are encoded
         as approximate circuits rather than exact QFT implementations.
         """
-
         # Firstly, expand high level gates, such as QFTGate()
         normalized = QuantumCircuit(*self.original_qc.qregs, *self.original_qc.cregs)
         for instruction in self.original_qc.data:
@@ -194,7 +186,6 @@ class SteaneTranspiler:
 
         measure_all() is unsupported operation
         """
-
         for q, c in zip(instruction.qubits, instruction.clbits, strict=False):
             logical_qubit_index = self.original_qc.qubits.index(q)
             logical_classical_bit_index = self.original_qc.clbits.index(c)
@@ -340,7 +331,6 @@ class SteaneTranspiler:
             self.insert_syndromes(control_logical_qubit_index)
             self.insert_syndromes(target_logical_qubit_index)
 
-    # TODO: Review and verify it works
     def insert_syndromes(self, logical_qubit_index: int) -> None:
         """Automate the insertion of the measurement and correction cycles."""
         physical_data_register = self.physical_data_registers[logical_qubit_index]

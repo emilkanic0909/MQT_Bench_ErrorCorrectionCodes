@@ -118,7 +118,7 @@ def apply_seven_qubit_steane_code_correction(
     Measures the 6 syndrome qubits and conditionally applies X/Z gates to correct
     single-qubit errors on any of the 7 data qubits.
 
-    Arguments:
+    Args:
         qc: The quantum circuit to modify.
         logical_qubit: Register containing the 7 data qubits.
         bit_flip_syndrome: Register containing the 3 bit-flip syndrome qubits.
