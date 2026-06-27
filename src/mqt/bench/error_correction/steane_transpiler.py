@@ -14,8 +14,6 @@ from typing import TYPE_CHECKING
 
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import AncillaRegister
-from qiskit.transpiler import PassManager
-from qiskit.transpiler.passes.synthesis import SolovayKitaev
 
 from mqt.bench.components.steane_circuit_components import (
     apply_seven_qubit_steane_code_correction,
@@ -126,24 +124,11 @@ class SteaneTranspiler:
                 tmp = QuantumCircuit(len(instruction.qubits))
                 tmp.append(instruction.operation, range(len(instruction.qubits)))
 
-                # 1. break down 2 qubit gates into single qubit gates, which are still continuous
-                continuous_basis = ["rx", "ry", "rz", "cx", "cz"]
-                tmp_continuous = transpile(
-                    tmp, basis_gates=continuous_basis, optimization_level=3, approximation_degree=0.95
-                )
-
-                # 2. Use Solovay-Kitaev to transform continuous gates into discrete ones
-                # recursion_degree controls depth/accuracy trade-off
-                sk_pass = SolovayKitaev(recursion_degree=2, basis_gates=["h", "x", "z", "s", "t"])
-                pm = PassManager([sk_pass])
-                pm.run(tmp_continuous)
-
                 tmp = transpile(
                     tmp,
                     basis_gates=["h", "x", "z", "s", "t", "cx", "cz"],
                     optimization_level=3,
                     approximation_degree=0.95,
-                    unitary_synthesis_method="sk",  # test
                 )
 
                 normalized.compose(
