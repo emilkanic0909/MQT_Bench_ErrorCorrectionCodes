@@ -1589,13 +1589,11 @@ wheels = [
 name = "mqt-bench"
 source = { editable = "." }
 dependencies = [
-    { name = "mqt-qcec" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "qiskit", extra = ["qasm3-import"] },
-    { name = "qiskit-aer" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.9.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
@@ -1641,7 +1639,6 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mqt-qcec", specifier = ">=3.6.1" },
     { name = "networkx", specifier = ">=2.8.8" },
     { name = "numpy", specifier = ">=1.22" },
     { name = "numpy", marker = "python_full_version >= '3.11'", specifier = ">=1.24" },
@@ -1649,7 +1646,6 @@ requires-dist = [
     { name = "numpy", marker = "python_full_version >= '3.13'", specifier = ">=2.1" },
     { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
     { name = "qiskit", extras = ["qasm3-import"], specifier = ">=2.4.0" },
-    { name = "qiskit-aer", specifier = ">=0.17.2" },
     { name = "scikit-learn", specifier = ">=1.5.2" },
     { name = "scikit-learn", marker = "python_full_version >= '3.14'", specifier = ">=1.7.2" },
 ]
