@@ -41,6 +41,10 @@ def test_errorcorrection_transpiler_gate_equivalence(code: str, gate: Gate) -> N
     containing only that gate, transpiles it with syndrome extraction disabled,
     decodes the physical qubits back to logical qubits, and then checks via
     MQT QCEC that the resulting circuit is unitarily equivalent to the original.
+
+    Args:
+        code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
+        gate: The single-qubit gate to verify.
     """
     if (gate.name == "s" and code == "shor") or (gate.name == "h" and code == "shor"):
         # this transpiler constructs the SGate using measure and a classically controlled operation
@@ -77,6 +81,10 @@ def test_errorcorrection_transpiler_gate_correctness(code: str, gate: Gate) -> N
 
     1. The error-corrected circuit matches the logical circuit.
     2. The error-induced circuit still matches the clean corrected circuit.
+
+    Args:
+        code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
+        gate: The gate to apply to the logical circuit before error correction.
     """
     if gate.name == "s" and code == "shor":
         # this takes a little longer....
@@ -164,6 +172,15 @@ def test_errorcorrection_transpiler_correctness(
 
     `circuit_size` can be any list of integers between 3 and 10 (=> up to range(3,11)).
     For larger circuit sizes, gate_counts.json has to be updated
+
+    Args:
+        code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
+        algorithm: Name of the benchmark algorithm (e.g. ``"ghz"``, ``"bv"``,
+            ``"graphstate"``).
+        error: The fault gate to inject after encoding.
+        measure_base_x: If ``True``, an H gate is inserted before each
+            measurement to switch from the Z basis to the X basis.
+        circuit_size: Number of logical qubits in the benchmark circuit.
     """
     test_id = f"{circuit_size} qubit {algorithm} on {code} with ZBasis {measure_base_x} and error {error.name}"
 
@@ -238,6 +255,12 @@ def test_error_correction_circuit_structure(code: str, alg: str, logical_qubits:
 
     QFT circuits are excluded from the qubit-count checks because their ancilla
     qubit count scales with the number of T gates rather than the logical qubit count.
+
+    Args:
+        code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
+        alg: Name of the benchmark algorithm (e.g. ``"ghz"``, ``"bv"``,
+            ``"graphstate"``, ``"qft"``).
+        logical_qubits: Number of logical qubits in the benchmark circuit.
     """
     test_id = f"{logical_qubits} qubit {alg} on {code}"
 
@@ -517,8 +540,8 @@ def compare_distributions(
 def parse_qubits(qc: qk.QuantumCircuit, physical_qubits: str) -> str:
     """Extract logical qubit measurements from a physical measurement string.
 
-    The circuit must use registers named 'qx' (where x is an integer) for each
-    logical qubit, with the decoded result stored in qx[0].
+    The circuit must use registers named ``qx`` (where ``x`` is an integer) for
+    each logical qubit, with the decoded result stored in ``qx[0]``.
 
     Args:
         qc: The quantum circuit containing named registers.
@@ -549,7 +572,7 @@ def condense_counts(qc: qk.QuantumCircuit, counts: dict[str, int]) -> dict[str, 
     """Map physical measurement counts to logical measurement counts.
 
     Requires the circuit to have decoded each logical qubit into the first
-    qubit of a register named 'qx', where x is an integer (e.g., 'q2').
+    qubit of a register named ``qx``, where ``x`` is an integer (e.g. ``"q2"``).
 
     Args:
         qc: The quantum circuit with named registers.
