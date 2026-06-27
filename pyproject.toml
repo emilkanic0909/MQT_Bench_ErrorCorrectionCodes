@@ -33,6 +33,8 @@ dependencies = [
     "scikit-learn>=1.5.2",
     "scikit-learn>=1.7.2; python_version >= '3.14'",
     "mqt-qcec>=3.6.1",
+    "qiskit-aer>=0.17.2",
+
 ]
 
 classifiers = [
@@ -82,9 +84,6 @@ dev = [
     "nox>=2025.11.12",
     "prek>=0.2.27",
     "ty==0.0.40",
-]
-pytest = [
-    "qiskit-aer>=0.17.2",
 ]
 
 [project.scripts]
