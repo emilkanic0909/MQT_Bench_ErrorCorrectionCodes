@@ -32,6 +32,7 @@ dependencies = [
     "numpy>=2.3.2; python_version >= '3.14'",
     "scikit-learn>=1.5.2",
     "scikit-learn>=1.7.2; python_version >= '3.14'",
+    "mqt-qcec>=3.6.1",
 ]
 
 classifiers = [
@@ -83,7 +84,6 @@ dev = [
     "ty==0.0.40",
 ]
 pytest = [
-    "mqt-qcec>=3.6.1",
     "qiskit-aer>=0.17.2",
 ]
 
