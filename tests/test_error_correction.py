@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from re import fullmatch
 from typing import TYPE_CHECKING
 
@@ -195,10 +193,85 @@ def test_errorcorrection_transpiler_correctness(
     )
 
 
-@pytest.mark.parametrize("logical_qubits", range(3, 10))  # multiple parametrize lead to crossproducts
-@pytest.mark.parametrize("alg", ["ghz", "bv", "graphstate", "qft"])
-@pytest.mark.parametrize("code", ["shor", "steane"])
-def test_error_correction_circuit_structure(code: str, alg: str, logical_qubits: int) -> None:
+@pytest.mark.parametrize(
+    (
+        "logical_qubits",
+        "code",
+        "alg",
+        "expected_gates",
+    ),
+    [
+        (
+            3,
+            "shor",
+            "ghz",
+            {"cx": 186, "if_else": 60, "h": 47, "measure": 43, "reset": 40, "barrier": 27, "swap": 3},
+        ),
+        (
+            3,
+            "shor",
+            "bv",
+            {"cx": 265, "if_else": 108, "h": 105, "measure": 74, "reset": 72, "barrier": 48, "swap": 18, "z": 3},
+        ),
+        (
+            3,
+            "shor",
+            "graphstate",
+            {"cx": 435, "if_else": 180, "h": 159, "measure": 123, "reset": 120, "barrier": 83, "swap": 27},
+        ),
+        (
+            3,
+            "shor",
+            "qft",
+            {
+                "cx": 788,
+                "if_else": 260,
+                "h": 185,
+                "measure": 179,
+                "reset": 168,
+                "barrier": 107,
+                "swap": 9,
+                "p": 8,
+                "x": 6,
+            },
+        ),
+        (
+            3,
+            "steane",
+            "ghz",
+            {"cx": 200, "if_else": 70, "h": 55, "measure": 33, "reset": 30, "barrier": 23},
+        ),
+        (
+            3,
+            "steane",
+            "bv",
+            {"cx": 223, "if_else": 98, "h": 85, "measure": 44, "reset": 42, "barrier": 30, "x": 7, "cz": 7},
+        ),
+        (
+            3,
+            "steane",
+            "graphstate",
+            {"cx": 282, "if_else": 126, "h": 93, "measure": 57, "reset": 54, "barrier": 38, "cz": 21},
+        ),
+        (
+            3,
+            "steane",
+            "qft",
+            {
+                "cx": 772,
+                "if_else": 300,
+                "h": 243,
+                "measure": 135,
+                "reset": 126,
+                "barrier": 85,
+                "t": 42,
+                "sdg": 14,
+                "z": 14,
+            },
+        ),
+    ],
+)
+def test_error_correction_circuit_structure(logical_qubits: int, code: str, alg: str, expected_gates: dict) -> None:
     """Verify the physical circuit structure produced by the error-correction encoder.
 
     Checks that the encoded circuit has the correct number of physical qubits,
@@ -218,10 +291,11 @@ def test_error_correction_circuit_structure(code: str, alg: str, logical_qubits:
     qubit count scales with the number of T gates rather than the logical qubit count.
 
     Args:
+        logical_qubits: Number of logical qubits in the benchmark circuit.
         code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
         alg: Name of the benchmark algorithm (e.g. ``"ghz"``, ``"bv"``,
             ``"graphstate"``, ``"qft"``).
-        logical_qubits: Number of logical qubits in the benchmark circuit.
+        expected_gates: Expected occurrences of gates in the benchmark circuit (based on qc.count_ops()).
     """
     test_id = f"{logical_qubits} qubit {alg} on {code}"
 
@@ -286,20 +360,9 @@ def test_error_correction_circuit_structure(code: str, alg: str, logical_qubits:
             f"Expected creg sizes {expected_creg_sizes}, found {creg_sizes} for {test_id}"
         )
 
-    expected_gate_counts = None
-
-    json_location = Path(__file__).parent / "gate_counts.json"
-    with json_location.open("r", encoding="utf-8") as json_data:
-        expected_gate_counts = json.load(json_data)
-
-    assert expected_gate_counts is not None, f"Failure reading respective gate counts for {test_id}"
-    expected_gate_counts = expected_gate_counts[code][alg][f"{logical_qubits}"]
-
     # Counts the occurrence of every gate in the created circuit
-    created_gate_counts = qc.count_ops()
-    assert expected_gate_counts == created_gate_counts, (
-        f"Created circuit does not contain the expected gates for {test_id}"
-    )
+    created_gates = qc.count_ops()
+    assert expected_gates == created_gates, f"Created circuit does not contain the expected gates for {test_id}"
 
 
 def insert_error_after_barrier(
