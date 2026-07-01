@@ -193,82 +193,47 @@ def test_errorcorrection_transpiler_correctness(
     )
 
 
+SHOR_GHZ = {"cx": 186, "if_else": 60, "h": 47, "measure": 43, "reset": 40, "barrier": 27, "swap": 3}
+SHOR_BV = {"cx": 265, "if_else": 108, "h": 105, "measure": 74, "reset": 72, "barrier": 48, "swap": 18, "z": 3}
+SHOR_GRAPHSTATE = {"cx": 435, "if_else": 180, "h": 159, "measure": 123, "reset": 120, "barrier": 83, "swap": 27}
+SHOR_QFT = {
+    "cx": 788,
+    "if_else": 260,
+    "h": 185,
+    "measure": 179,
+    "reset": 168,
+    "barrier": 107,
+    "swap": 9,
+    "p": 8,
+    "x": 6,
+}
+STEANE_GHZ = {"cx": 200, "if_else": 70, "h": 55, "measure": 33, "reset": 30, "barrier": 23}
+STEANE_BV = {"cx": 223, "if_else": 98, "h": 85, "measure": 44, "reset": 42, "barrier": 30, "x": 7, "cz": 7}
+STEANE_GRAPHSTATE = {"cx": 282, "if_else": 126, "h": 93, "measure": 57, "reset": 54, "barrier": 38, "cz": 21}
+STEANE_QFT = {
+    "cx": 772,
+    "if_else": 300,
+    "h": 243,
+    "measure": 135,
+    "reset": 126,
+    "barrier": 85,
+    "t": 42,
+    "sdg": 14,
+    "z": 14,
+}
+
+
 @pytest.mark.parametrize(
-    (
-        "logical_qubits",
-        "code",
-        "alg",
-        "expected_gates",
-    ),
+    ("logical_qubits", "code", "alg", "expected_gates"),
     [
-        (
-            3,
-            "shor",
-            "ghz",
-            {"cx": 186, "if_else": 60, "h": 47, "measure": 43, "reset": 40, "barrier": 27, "swap": 3},
-        ),
-        (
-            3,
-            "shor",
-            "bv",
-            {"cx": 265, "if_else": 108, "h": 105, "measure": 74, "reset": 72, "barrier": 48, "swap": 18, "z": 3},
-        ),
-        (
-            3,
-            "shor",
-            "graphstate",
-            {"cx": 435, "if_else": 180, "h": 159, "measure": 123, "reset": 120, "barrier": 83, "swap": 27},
-        ),
-        (
-            3,
-            "shor",
-            "qft",
-            {
-                "cx": 788,
-                "if_else": 260,
-                "h": 185,
-                "measure": 179,
-                "reset": 168,
-                "barrier": 107,
-                "swap": 9,
-                "p": 8,
-                "x": 6,
-            },
-        ),
-        (
-            3,
-            "steane",
-            "ghz",
-            {"cx": 200, "if_else": 70, "h": 55, "measure": 33, "reset": 30, "barrier": 23},
-        ),
-        (
-            3,
-            "steane",
-            "bv",
-            {"cx": 223, "if_else": 98, "h": 85, "measure": 44, "reset": 42, "barrier": 30, "x": 7, "cz": 7},
-        ),
-        (
-            3,
-            "steane",
-            "graphstate",
-            {"cx": 282, "if_else": 126, "h": 93, "measure": 57, "reset": 54, "barrier": 38, "cz": 21},
-        ),
-        (
-            3,
-            "steane",
-            "qft",
-            {
-                "cx": 772,
-                "if_else": 300,
-                "h": 243,
-                "measure": 135,
-                "reset": 126,
-                "barrier": 85,
-                "t": 42,
-                "sdg": 14,
-                "z": 14,
-            },
-        ),
+        (3, "shor", "ghz", SHOR_GHZ),
+        (3, "shor", "bv", SHOR_BV),
+        (3, "shor", "graphstate", SHOR_GRAPHSTATE),
+        (3, "shor", "qft", SHOR_QFT),
+        (3, "steane", "ghz", STEANE_GHZ),
+        (3, "steane", "bv", STEANE_BV),
+        (3, "steane", "graphstate", STEANE_GRAPHSTATE),
+        (3, "steane", "qft", STEANE_QFT),
     ],
 )
 def test_error_correction_circuit_structure(logical_qubits: int, code: str, alg: str, expected_gates: dict) -> None:
@@ -299,16 +264,23 @@ def test_error_correction_circuit_structure(logical_qubits: int, code: str, alg:
     """
     test_id = f"{logical_qubits} qubit {alg} on {code}"
 
-    qc = benchmark_generation.get_benchmark(
-        benchmark=alg, level=benchmark_generation.BenchmarkLevel.ALG, circuit_size=logical_qubits, encoding=code
-    )
     log_qc = benchmark_generation.get_benchmark(
         benchmark=alg, level=benchmark_generation.BenchmarkLevel.ALG, circuit_size=logical_qubits, encoding=""
     )
 
+    # add error correction to the logical circuit
+    qc = log_qc.copy()
+    if code not in ["shor", "steane"]:
+        msg = "incorrect code submitted"
+        raise ValueError(msg)
+    if code == "shor":
+        transpiler = ShorTranspiler(qc, add_syndromes=True)
+    elif code == "steane":
+        transpiler = SteaneTranspiler(qc, add_syndromes=True)
+    transpiler.transpile()  # pyright: ignore[reportPossiblyUnboundVariable]
+
     qubit_code_factor = -1
     classical_code_factor = -1
-
     expected_qreg_sizes = []
     expected_creg_sizes = []
 
@@ -316,7 +288,6 @@ def test_error_correction_circuit_structure(logical_qubits: int, code: str, alg:
         # Each logical qubit is split in 7 physical qubits
         # Additionally, 6 ancillary registers are added
         qubit_code_factor = 13
-
         classical_code_factor = 6
 
         # Check quantum register sizes: 7n (data) + 3n (bit-flip syndrome) + 3n (phase-flip syndrome)
