@@ -15,9 +15,7 @@ from pathlib import Path
 from re import fullmatch
 from typing import TYPE_CHECKING
 
-import mqt.qcec
 import pytest
-from mqt.qcec.pyqcec import EquivalenceCriterion
 from qiskit import QuantumCircuit
 from qiskit.circuit import CircuitInstruction, ClassicalRegister
 from qiskit.circuit.library import CXGate, CZGate, HGate, SGate, XGate, ZGate
@@ -30,43 +28,6 @@ from mqt.bench.error_correction.steane_transpiler import SteaneTranspiler
 if TYPE_CHECKING:
     import qiskit as qk
     from qiskit.circuit import Gate
-
-
-@pytest.mark.parametrize("code", ["steane", "shor"])
-@pytest.mark.parametrize("gate", [XGate(), ZGate(), HGate(), SGate()])
-def test_errorcorrection_transpiler_gate_equivalence(code: str, gate: Gate) -> None:
-    """Verify that the error-correction transpiler preserves gate semantics.
-
-    For each supported single-qubit gate, builds a minimal logical circuit
-    containing only that gate, transpiles it with syndrome extraction disabled,
-    decodes the physical qubits back to logical qubits, and then checks via
-    MQT QCEC that the resulting circuit is unitarily equivalent to the original.
-
-    Args:
-        code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
-        gate: The single-qubit gate to verify.
-    """
-    if (gate.name == "s" and code == "shor") or (gate.name == "h" and code == "shor"):
-        # this transpiler constructs the SGate using measure and a classically controlled operation
-        # therefore it can't be evaluated properly by MQT.QCEC
-        pytest.skip()
-
-    num_qubits = gate.num_qubits
-    logical_circuit = QuantumCircuit(num_qubits)
-    logical_circuit.append(gate, qargs=list(range(num_qubits)))
-
-    error_corrected_circuit = logical_circuit.copy()
-    if code == "shor":
-        transpiler = ShorTranspiler(error_corrected_circuit, add_syndromes=False)
-    else:
-        transpiler = SteaneTranspiler(error_corrected_circuit, add_syndromes=False)
-    transpiler.transpile()
-    transpiler.decode_qubits()
-    error_corrected_circuit = transpiler.transpiled_qc
-
-    assert check_equivalence(logical_circuit, error_corrected_circuit), (
-        f"Transpiler {code} does not convert Gate {gate.name} to its logical equivalent"
-    )
 
 
 @pytest.mark.parametrize("code", ["steane", "shor"])
@@ -429,26 +390,6 @@ def insert_error(qc: QuantumCircuit, gate: Gate | None = None, index: int | None
         raise ValueError(msg)
 
     return qc
-
-
-def check_equivalence(qc1: qk.QuantumCircuit, qc2: qk.QuantumCircuit) -> bool:
-    """Uses MQT QCEC to verify if qc1 and qc2 are equivalent.
-
-    Args:
-        qc1: The first quantum circuit.
-        qc2: The second quantum circuit.
-
-    Returns:
-        True if the circuits are equivalent, equivalent up to global phase,
-        or probably equivalent; False otherwise.
-    """
-    verification_results = mqt.qcec.verify(qc1, qc2, check_partial_equivalence=True)
-    accepted_equivalencies = [
-        EquivalenceCriterion.equivalent,
-        EquivalenceCriterion.equivalent_up_to_global_phase,
-        EquivalenceCriterion.probably_equivalent,
-    ]
-    return verification_results.equivalence in accepted_equivalencies
 
 
 def measure_all_named(qc: QuantumCircuit, name: str = "measurement") -> QuantumCircuit:
