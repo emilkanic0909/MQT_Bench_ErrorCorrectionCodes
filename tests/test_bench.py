@@ -15,6 +15,7 @@ import datetime
 import functools
 import io
 import re
+import warnings
 from enum import StrEnum
 from importlib import metadata
 from pathlib import Path
@@ -766,6 +767,31 @@ def test_get_benchmark_alg_encoding_parameters() -> None:
 
     assert get_benchmark_alg(benchmark="bv", circuit_size=1, encoding="shor")
     assert get_benchmark_alg(benchmark="bv", circuit_size=1, encoding="steane")
+
+
+@pytest.mark.parametrize(
+    ("level", "target"),
+    [
+        (BenchmarkLevel.INDEP, None),
+        (BenchmarkLevel.NATIVEGATES, get_device("rigetti_ankaa_84")),
+        (BenchmarkLevel.MAPPED, get_device("rigetti_ankaa_84")),
+    ],
+)
+def test_get_benchmark_encoding_ignored_for_non_alg_level(level: BenchmarkLevel, target: Target | None) -> None:
+    """Test that `encoding` is ignored (with a warning) for non-ALG levels."""
+    match = re.escape(
+        f"`encoding` is only supported for BenchmarkLevel.ALG and will be ignored for level={level.name}."
+    )
+    with pytest.warns(UserWarning, match=match):
+        qc = get_benchmark(benchmark="bv", level=level, circuit_size=3, target=target, encoding="shor")
+    assert qc.depth() > 0
+
+
+def test_get_benchmark_encoding_no_warning_for_alg_level() -> None:
+    """Test that `encoding` does not trigger a warning for the ALG level."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert get_benchmark(benchmark="bv", level=BenchmarkLevel.ALG, circuit_size=3, encoding="shor")
 
 
 def test_get_benchmark_faulty_parameters() -> None:

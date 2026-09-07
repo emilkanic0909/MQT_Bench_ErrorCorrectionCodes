@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import warnings
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Unpack, assert_never, overload
 
@@ -554,6 +555,7 @@ def get_benchmark(
                 (only used for "nativegates" and "mapped" level)
         opt_level: Optimization level to be used by the transpiler.
         encoding: Error correction code to be used, can be any of {"", "steane", "shor"}.
+                Only supported for `BenchmarkLevel.ALG`; ignored (with a warning) for other levels.
         generate_mirror_circuit: If True, generates the mirror version (U @ U.inverse()) of the benchmark.
         random_parameters: If True, assigns random parameters to the circuit's parameters if they exist.
         kwargs: Additional keyword arguments passed to the circuit creation.
@@ -561,6 +563,13 @@ def get_benchmark(
     Returns:
         Qiskit::QuantumCircuit object representing the benchmark with the selected options
     """
+    if level is not BenchmarkLevel.ALG and encoding:
+        warnings.warn(
+            f"`encoding` is only supported for BenchmarkLevel.ALG and will be ignored for level={level.name}.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     if level is BenchmarkLevel.ALG:
         return get_benchmark_alg(
             benchmark=benchmark,
