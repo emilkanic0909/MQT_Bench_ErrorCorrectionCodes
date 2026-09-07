@@ -26,6 +26,11 @@ that minor releases may include breaking changes.
 - 🔥 Drop support for Python 3.10 ([#999]) ([**@denialhaag**])
 - 🍎 Stop testing on x86 macOS systems ([#999]) ([**@denialhaag**])
 
+### Removed
+
+- 🔥 Remove the `create_mqt_bench_zip` and `generate_mqt_bench` console scripts,
+  whose target modules no longer exist ([#1011]) ([**@cnYui**])
+
 ## [2.2.3] - 2026-07-07
 
 ### Added
@@ -183,6 +188,7 @@ _📚 Refer to the [GitHub Release Notes] for previous changelogs._
 
 <!-- PR links -->
 
+[#1011]: https://github.com/munich-quantum-toolkit/bench/pull/1011
 [#999]: https://github.com/munich-quantum-toolkit/bench/pull/999
 [#997]: https://github.com/munich-quantum-toolkit/bench/pull/997
 [#952]: https://github.com/munich-quantum-toolkit/bench/pull/952
@@ -246,6 +252,7 @@ _📚 Refer to the [GitHub Release Notes] for previous changelogs._
 [**@Felix-Gundlach**]: https://github.com/Felix-Gundlach
 [**@emilkanic0909**]: https://github.com/emilkanic0909
 [**@SalehAlsherif**]: https://github.com/SalehAlsherif
+[**@cnYui**]: https://github.com/cnYui
 
 <!-- General links -->
 
