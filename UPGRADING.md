@@ -19,7 +19,7 @@ or later.
 
 ### Changed
 
-- ⬆️ Increase minimum Qiskit version to 2.4.0 ([#930]) ([**@Felix-Gundlach**],
+- ⬆️ Increase minimum Qiskit version to 2.4.0 ([#930]) ([**@Felix-Gundlach**]),
 
 ## [2.2.0]
 
