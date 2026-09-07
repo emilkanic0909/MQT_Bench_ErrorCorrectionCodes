@@ -17,6 +17,10 @@ Starting with this release, MQT Bench no longer supports Python 3.10. As a
 result, MQT Bench is no longer tested under Python 3.10 and requires Python 3.11
 or later.
 
+### Changed
+
+- ⬆️ Increase minimum Qiskit version to 2.4.0 ([#930]) ([**@Felix-Gundlach**],
+
 ## [2.2.0]
 
 ### Dynamic benchmarks and device support for control flow
