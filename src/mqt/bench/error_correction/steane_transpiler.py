@@ -43,8 +43,7 @@ class SteaneTranspiler(ECTranspiler):
 
     Every gate in :attr:`TARGET_GATE_SET` except SWAP, DCX and CY is transversal in the strict
     sense used by :class:`ECTranspiler`, i.e. realized by applying a single physical gate once per
-    physical qubit position. SWAP, DCX and CY are implemented in terms of the transversal CX/S/Sdg
-    gates. T and Tdg have no dedicated handler and are therefore automatically realized as opaque,
+    physical qubit position. T and Tdg have no dedicated handler and are therefore automatically realized as opaque,
     ideal logical gadgets by the base class.
     """
 
@@ -61,10 +60,7 @@ class SteaneTranspiler(ECTranspiler):
         "s",
         "sdg",
         "cx",
-        "cy",
         "cz",
-        "swap",
-        "dcx",
         "t",
         "tdg",
     ]
