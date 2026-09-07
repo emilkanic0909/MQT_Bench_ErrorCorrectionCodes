@@ -83,7 +83,6 @@ class ECTranspiler(ABC):
 
         Args:
             original_circuit: Original circuit to transpile using the error-correcting code.
-            add_syndromes: Whether to insert syndrome extraction and correction cycles.
         """
         self.original_qc = original_circuit
         self.num_logical_qubits = original_circuit.num_qubits
@@ -257,8 +256,7 @@ class ECTranspiler(ABC):
     def insert_syndromes(self, logical_qubit_index: int) -> None:
         """Run the code's syndrome extraction and correction cycle for one logical qubit's block.
 
-        This method is called automatically after every logical gate if the transpiler was
-        constructed with ``add_syndromes=True``.
+        This method is called automatically after every logical gate.
 
         Args:
             logical_qubit_index: Index of the logical qubit whose data block should undergo the
