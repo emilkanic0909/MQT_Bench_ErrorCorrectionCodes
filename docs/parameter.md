@@ -56,6 +56,14 @@ print(get_available_device_names())
   they exist.
 - `generate_mirror_circuit`: Generate the mirror version (U @ U.inverse()) of
   the benchmark.
+- `encoding`: Error correction code applied to the output. Encoding of
+  non-transversal gates uses placeholders.
+
+Possible values for `encoding`:
+
+```text
+["", "steane", "shor"]
+```
 
 ## Native Gate-Set Support
 
