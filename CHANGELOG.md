@@ -12,10 +12,6 @@ that minor releases may include breaking changes.
 
 ## [Unreleased]
 
-## [2.3.0] - 2026-09-12
-
-_If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#230)._
-
 ### Added
 
 - ✨ Add Steane's and Shor's encoding for benchmarks ([#930])
@@ -27,8 +23,6 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#230)._
   [**@emilkanic0909**], [**@SalehAlsherif**])
 - ✨ Add optional structured loops to Grover's algorithm and quantum walk
   ([#997]) ([**@flowerthrower**])
-- ⬆️ Raise the minimum Qiskit version from 2.0.0 to 2.1.0 ([#1024])
-  ([**@denialhaag**])
 - 🔥 Drop support for Python 3.10 ([#999]) ([**@denialhaag**])
 - 🍎 Stop testing on x86 macOS systems ([#999]) ([**@denialhaag**])
 
@@ -182,8 +176,7 @@ _📚 Refer to the [GitHub Release Notes] for previous changelogs._
 
 <!-- Version links -->
 
-[unreleased]: https://github.com/munich-quantum-toolkit/bench/compare/v2.3.0...HEAD
-[2.3.0]: https://github.com/munich-quantum-toolkit/bench/releases/tag/v2.3.0
+[unreleased]: https://github.com/munich-quantum-toolkit/bench/compare/v2.2.3...HEAD
 [2.2.3]: https://github.com/munich-quantum-toolkit/bench/releases/tag/v2.2.3
 [2.2.2]: https://github.com/munich-quantum-toolkit/bench/releases/tag/v2.2.2
 [2.2.1]: https://github.com/munich-quantum-toolkit/bench/releases/tag/v2.2.1
@@ -195,7 +188,6 @@ _📚 Refer to the [GitHub Release Notes] for previous changelogs._
 
 <!-- PR links -->
 
-[#1024]: https://github.com/munich-quantum-toolkit/bench/pull/1024
 [#1011]: https://github.com/munich-quantum-toolkit/bench/pull/1011
 [#999]: https://github.com/munich-quantum-toolkit/bench/pull/999
 [#997]: https://github.com/munich-quantum-toolkit/bench/pull/997
