@@ -15,6 +15,8 @@ import datetime
 import functools
 import io
 import re
+import sys
+import types
 import warnings
 from enum import StrEnum
 from importlib import metadata
@@ -34,7 +36,8 @@ from qiskit.transpiler import (
 )
 from qiskit.transpiler.passes import GatesInBasis, RemoveBarriers
 
-from mqt.bench import benchmark_generation
+from mqt.bench import benchmark_generation, error_correction
+from mqt.bench.error_correction import get_available_encoding_names, get_transpiler
 from mqt.bench.error_correction.shor_transpiler import ShorTranspiler
 from mqt.bench.error_correction.steane_transpiler import SteaneTranspiler
 
@@ -678,6 +681,59 @@ def test_error_correction_transpiler_edge_cases() -> None:
     for transpiler in [SteaneTranspiler(qc.copy()), ShorTranspiler(qc.copy())]:
         qc = transpiler.transpile()
         assert "barrier" in qc.count_ops()
+
+
+def test_available_encodings() -> None:
+    """The available encoding names should map to their transpilers and be safe to mutate."""
+    names = get_available_encoding_names()
+    assert set(names) == {"shor", "steane"}
+
+    names.append("dummy_encoding")
+    assert "dummy_encoding" not in get_available_encoding_names()
+
+    assert get_transpiler("shor") is ShorTranspiler
+    assert get_transpiler("steane") is SteaneTranspiler
+    with pytest.raises(ValueError, match="not a supported error-correcting code"):
+        get_transpiler("dummy_encoding")
+
+
+_FAKE_TRANSPILER_MODULE = "mqt.bench.error_correction._fake_transpiler"
+
+
+def _install_fake_transpiler_module(monkeypatch: pytest.MonkeyPatch, cls: type, modules: list[str]) -> None:
+    """Expose ``cls`` via a fake module of the error correction package and let discovery scan ``modules``."""
+    module = types.ModuleType(_FAKE_TRANSPILER_MODULE)
+    cls.__module__ = _FAKE_TRANSPILER_MODULE
+    module.__dict__[cls.__name__] = cls
+    monkeypatch.setitem(sys.modules, _FAKE_TRANSPILER_MODULE, module)
+    monkeypatch.setattr(error_correction, "_DISCOVERED_MODULES", modules)
+
+
+def test_discover_transpilers() -> None:
+    """Discovery should find exactly the concrete transpilers of the package."""
+    assert error_correction._discover_transpilers() == {"shor": ShorTranspiler, "steane": SteaneTranspiler}  # ruff: ignore[private-member-access]
+
+
+def test_discover_transpilers_missing_code_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A concrete transpiler without a CODE_NAME should be rejected."""
+
+    class NoNameTranspiler(ShorTranspiler):
+        CODE_NAME = None
+
+    _install_fake_transpiler_module(monkeypatch, NoNameTranspiler, ["_fake_transpiler"])
+    with pytest.raises(TypeError, match="must define a 'CODE_NAME'"):
+        error_correction._discover_transpilers()  # ruff: ignore[private-member-access]
+
+
+def test_discover_transpilers_duplicate_code_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two transpilers sharing a CODE_NAME should be rejected."""
+
+    class DuplicateTranspiler(ShorTranspiler):  # inherits CODE_NAME = "shor"
+        pass
+
+    _install_fake_transpiler_module(monkeypatch, DuplicateTranspiler, ["shor_transpiler", "_fake_transpiler"])
+    with pytest.raises(TypeError, match="share the CODE_NAME 'shor'"):
+        error_correction._discover_transpilers()  # ruff: ignore[private-member-access]
 
 
 @pytest.mark.parametrize(

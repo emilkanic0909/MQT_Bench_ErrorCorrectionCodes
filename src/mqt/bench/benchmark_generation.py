@@ -22,8 +22,7 @@ from qiskit.converters import circuit_to_dag
 from qiskit.transpiler import Layout, Target
 
 from .benchmarks import create_circuit
-from .error_correction.shor_transpiler import ShorTranspiler
-from .error_correction.steane_transpiler import SteaneTranspiler
+from .error_correction import get_available_encoding_names, get_transpiler
 from .targets.gatesets import get_target_for_gateset, ionq, rigetti
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -216,7 +215,7 @@ def get_benchmark_alg(
     Returns:
         Qiskit::QuantumCircuit representing the raw benchmark circuit without any hardware-specific compilation or mapping.
     """
-    valid_encodings = {"", "shor", "steane"}
+    valid_encodings = {"", *get_available_encoding_names()}
     if encoding not in valid_encodings:
         msg = f"Invalid `encoding` '{encoding}'. Must be one of {valid_encodings}."
         raise ValueError(msg)
@@ -226,14 +225,9 @@ def get_benchmark_alg(
     if generate_mirror_circuit:
         qc = _create_mirror_circuit(qc, inplace=True)
 
-    if encoding == "shor":
-        transpiler = ShorTranspiler(qc)
-        transpiler.transpile()
-        qc = transpiler.transpiled_qc
-    if encoding == "steane":
-        transpiler = SteaneTranspiler(qc)
-        transpiler.transpile()
-        qc = transpiler.transpiled_qc
+    if encoding:
+        transpiler = get_transpiler(encoding)(qc)
+        qc = transpiler.transpile()
 
     return qc
 
