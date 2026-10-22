@@ -24,6 +24,7 @@ from qiskit.transpiler import Layout, Target
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 
 from .benchmarks import create_circuit
+from .error_correction import get_available_encoding_names, get_transpiler
 from .targets.gatesets import get_target_for_gateset
 from .targets.gatesets._compilation import prepare_target
 from .targets.gatesets.ibm import configure_fractional_angles
@@ -394,6 +395,12 @@ def get_benchmark_native_gates(
 
     circuit = _get_circuit(benchmark, circuit_size, random_parameters, **kwargs)
 
+    # Native compilation uses the instructions, not the target's physical constraints.
+    native_target = Target(description=target.description, num_qubits=target.num_qubits)
+    for name in target.operation_names:
+        native_target.add_instruction(target.operation_from_name(name), name=name)
+    target = native_target
+
     if target.description == "clifford+t":
         from qiskit.circuit.library import PermutationGate  # ruff:ignore[import-outside-top-level]
         from qiskit.transpiler import PassManager  # ruff:ignore[import-outside-top-level]
@@ -414,10 +421,18 @@ def get_benchmark_native_gates(
         if compiled_for_sk.layout is not None:
             circuit.append(PermutationGate(compiled_for_sk.layout.final_index_layout()), circuit.qubits)
 
-    pm = _get_qiskit_pass_manager(target, opt_level, native=True)
-    compiled_circuit = pm.run(circuit)
+    if "rigetti" in target.description:
+        rigetti.add_equivalences(SessionEquivalenceLibrary)
+    elif "ionq" in target.description:
+        ionq.add_equivalences(SessionEquivalenceLibrary)
+    compiled_circuit = transpile(
+        circuit,
+        optimization_level=opt_level,
+        target=target,
+        seed_transpiler=10,
+    )
     if generate_mirror_circuit:
-        return _create_mirror_circuit(compiled_circuit, inplace=True, pass_manager=pm)
+        return _create_mirror_circuit(compiled_circuit, inplace=True, target=target, optimization_level=opt_level)
     return compiled_circuit
 
 

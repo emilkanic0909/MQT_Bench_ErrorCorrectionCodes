@@ -893,9 +893,6 @@ def test_error_correction_transpiler_circuit_structure(
       ancilla + 2 X-stabiliser ancilla) and 8 classical bits per logical qubit (6
       bit-flip syndrome + 2 phase-flip syndrome), plus one bit per original clbit.
 
-    QFT circuits are excluded from the qubit-count checks because their ancilla
-    qubit count scales with the number of T gates rather than the logical qubit count.
-
     Args:
         logical_qubits: Number of logical qubits in the benchmark circuit.
         code: The error-correction code to use; either ``"steane"`` or ``"shor"``.
@@ -1004,6 +1001,18 @@ def test_error_correction_no_additional_classical_registers(code: str) -> None:
     # Check that both measurements target the same classical bit
     assert len(measurement_registers) == 1
     assert measurement_registers[0].name == "meas_0"
+
+
+@pytest.mark.parametrize(("encoding", "expected_qubits"), [("steane", 26), ("shor", 34)])
+def test_get_benchmark_alg_mirror_circuit_with_encoding(encoding: str, expected_qubits: int) -> None:
+    """This Test is supposed to check that `generate_mirror_circuit=True` does not skip the `encoding` step."""
+    qc = get_benchmark_alg("ghz", 2, encoding, generate_mirror_circuit=True)
+    assert qc.num_qubits == expected_qubits
+
+    # The result is the encoded mirror circuit, not the encoded original circuit.
+    mirror = get_benchmark_alg("ghz", 2, generate_mirror_circuit=True)
+    assert qc == get_transpiler(encoding)(mirror).transpile()
+    assert qc != get_benchmark_alg("ghz", 2, encoding)
 
 
 def test_error_correction_error_on_unsupported_operation() -> None:
