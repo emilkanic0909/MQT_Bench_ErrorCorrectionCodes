@@ -118,13 +118,13 @@ def create_circuit(num_qubits: int) -> QuantumCircuit:
 
     Encoding:
         1. Phase-flip encoding: The logical qubit is encoded across three blocks using
-           |0> → |+++> and |1> → |---> on qubits 0, 3, and 6.
+           ``|0>`` → ``|+++>`` and ``|1>`` → ``|--->`` on qubits 0, 3, and 6.
         2. Bit-flip encoding: Each of the three qubits is then encoded using the
-           3-qubit repetition code (|0> → |000>, |1> → |111>), giving three blocks
+           3-qubit repetition code (``|0>`` → ``|000>``, ``|1>`` → ``|111>``), giving three blocks
            of three qubits each (0-2, 3-5, 6-8).
         3. So the overall encoding is
-           - |0> -> (|000> + |111>) ⊗ (|000> + |111>) ⊗ (|000> + |111>)
-           - |1> -> (|000> - |111>) ⊗ (|000> - |111>) ⊗ (|000> - |111>)
+           - ``|0>`` -> (``|000>`` + ``|111>``) ⊗ (``|000>`` + ``|111>``) ⊗ (``|000>`` + ``|111>``)
+           - ``|1>`` -> (``|000>`` - ``|111>``) ⊗ (``|000>`` - ``|111>``) ⊗ (``|000>`` - ``|111>``)
 
     Syndrome Extraction:
         - Bit-flip syndrome: For each block, 2 ancilla qubits measure the parity of

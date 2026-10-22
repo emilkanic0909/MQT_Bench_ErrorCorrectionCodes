@@ -35,10 +35,10 @@ def get_three_qubit_phase_flip_decoding_circuit() -> QuantumCircuit:
     return out
 
 
-def get_three_qubit_bit_flip_encoding_decoding_circuit() -> QuantumCircuit:
+def _get_three_qubit_bit_flip_encoding_decoding_circuit() -> QuantumCircuit:
     """Create 3-qubit bit-flip encoding/decoding circuit.
 
-    Encodes |0> → |000> and |1> → |111>. Self-inverse, so used for both encoding and decoding.
+    Encodes ``|0>`` → ``|000>`` and ``|1>`` → ``|111>``. Self-inverse, so used for both encoding and decoding.
 
     Returns:
         QuantumCircuit: 3-qubit circuit (qubit 0 is the input/output qubit).
@@ -49,10 +49,10 @@ def get_three_qubit_bit_flip_encoding_decoding_circuit() -> QuantumCircuit:
     return out
 
 
-def get_three_qubit_phase_flip_encoding_circuit() -> QuantumCircuit:
+def _get_three_qubit_phase_flip_encoding_circuit() -> QuantumCircuit:
     """Create 3-qubit phase-flip encoding circuit.
 
-    Encodes |0> → |+++> and |1> → |--->
+    Encodes ``|0>`` → ``|+++>`` and ``|1>`` → ``|--->``
 
     Returns:
         QuantumCircuit: 3-qubit encoding circuit (qubit 0 is the input qubit).
@@ -64,7 +64,6 @@ def get_three_qubit_phase_flip_encoding_circuit() -> QuantumCircuit:
     out.h(1)
     out.h(2)
     return out
-
 
 def get_three_qubit_bit_flip_syndrome_extraction_circuit() -> QuantumCircuit:
     """Create circuit to extract bit-flip syndrome from a 3-qubit block.

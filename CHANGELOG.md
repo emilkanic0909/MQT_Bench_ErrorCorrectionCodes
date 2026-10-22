@@ -14,6 +14,15 @@ that minor releases may include breaking changes.
 
 ### Added
 
+- ✨ Add fractional IBM Heron targets with bounded RZZ angles ([#1087])
+  ([**@burgholzer**], [**@simon1hofmann**])
+- ✨ Add the IBM Nighthawk 120-qubit device and CZ gate set ([#1085])
+  ([**@burgholzer**])
+- ✨ Add the AQT IBEX 12-qubit device and native gate set ([#1084])
+  ([**@burgholzer**])
+- ✨ Add `SPDX-License-Identifier: MIT` to generated circuit headers ([#1083])
+  ([**@simon1hofmann**])
+- ✨ Add Bell-pair benchmark ([#1071]) ([**@NiranjanRSoorej06**])
 - 👷 Enable testing on Python 3.15 ([#1054]) ([**@denialhaag**])
 - ✨ Add quantum teleportation benchmark ([#1045]) ([**@AsharHusain**])
 - ✨ Add ML-QAE benchmark ([#1044]) ([**@algovista-collab**])
@@ -30,6 +39,15 @@ that minor releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Preserve native IonQ and Rigetti gate phases with local Qiskit lowering and
+  mirror layouts; require Qiskit 2.1.2 or newer ([#1086]) ([**@burgholzer**],
+  [**@simon1hofmann**])
+- 📝 Fix API documentation markup, heading anchors, and notebook build
+  concurrency ([#1088]) ([**@burgholzer**])
+- 🐛 Preserve caller-provided circuits during benchmark generation ([#1077])
+  ([**@AthulKampiyil**])
+- 🐛 Default optimization level to 2 and require target for native gates and
+  mapped levels in CLI ([#1076]) ([**@jyothikacodes**])
 - 🐛 Compile native gates without device connectivity or simulated calibration,
   and keep coupling-map headers stable across Qiskit versions ([#1069], [#1067])
   ([**@simon1hofmann**], [**@burgholzer**], [**@denialhaag**])
@@ -46,16 +64,24 @@ that minor releases may include breaking changes.
 - 🐛 Expose `__version__` and `__version_tuple__` at the package root ([#1031])
   ([**@algovista-collab**])
 
+### Removed
+
+- 🔥 Remove retired IBM Falcon, Eagle, and 133-qubit Heron models ([#1089])
+  ([**@burgholzer**])
+
 ## [2.3.0] - 2026-09-12
 
 _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#230)._
 
 ### Changed
 
-- ⬆️ Raise the minimum Qiskit version from 2.0.0 to 2.1.0 ([#1024])
-  ([**@denialhaag])
 - ✨ Add optional structured loops to Grover's algorithm and quantum walk
   ([#997]) ([**@flowerthrower**])
+- 
+### Added
+
+- ⬆️ Raise the minimum Qiskit version from 2.0.0 to 2.1.0 ([#1024])
+  ([**@denialhaag**])
 - 🔥 Drop support for Python 3.10 ([#999]) ([**@denialhaag**])
 - 🍎 Stop testing on x86 macOS systems ([#999]) ([**@denialhaag**])
 

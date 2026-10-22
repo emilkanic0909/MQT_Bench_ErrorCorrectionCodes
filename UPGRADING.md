@@ -6,6 +6,34 @@ of changes including minor and patch releases, please refer to the
 
 ## [Unreleased]
 
+### Qiskit 2.2.3 minimum
+
+The minimum Qiskit version is now 2.2.3, up from 2.1.2. Update dependency pins
+below 2.2.3 and upgrade Qiskit:
+
+```console
+python -m pip install --upgrade "qiskit[qasm3-import]>=2.2.3,<3"
+```
+
+### IonQ and Rigetti native gates
+
+IonQ GPI/GPI2 phases now use radians. Forte uses standard `rzz` and retains
+arbitrary virtual `rz`. Provider serializers must convert phase units and track
+virtual Z frames. The Aria model and custom MS/ZZ classes are removed. Rigetti
+uses standard RX gates named `rxpi`, `rxpidg`, `rxpi2`, and `rxpi2dg`. Qiskit
+compilation uses local, phase-correct equivalences. Replace `rigetti_ankaa_84`
+with `rigetti_cepheus_107`. The 2026-10-02 snapshot has 107 active qubits and
+386 directed CZ edges; calibration is unspecified. `CEPHEUS_PHYSICAL_QUBITS`
+maps dense Bench wires to provider labels, excluding physical qubit 8.
+
+### Retired IBM models
+
+The `ibm_falcon` and `ibm_eagle` gate sets and `ibm_falcon_27`,
+`ibm_falcon_127`, `ibm_eagle_127`, and `ibm_heron_133` devices are removed. Use
+`ibm_heron` and `ibm_heron_156`, or supply a custom Qiskit target for an older
+architecture. The Heron replacement has a different width, topology, and CZ
+basis; generated circuits will differ.
+
 ### Native gate-set targets
 
 `get_target_for_gateset` returns globally available instructions without
